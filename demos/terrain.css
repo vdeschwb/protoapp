@@ -1,0 +1,31 @@
+* {
+    margin: 0;
+}
+
+html, body {
+    height: 100%;
+    margin:0;
+    position: relative;
+}
+
+.header {
+	font-family: 'Lucida Console', Monaco, monospace;
+	font-size: 26pt;
+	font-weight: 100;
+	/*-webkit-text-fill-color: black;  Will override color (regardless of order) 
+   	-webkit-text-stroke-width: 0.001em;
+   	-webkit-text-stroke-color: white;*/
+	margin: 10%;
+	position: absolute;
+}
+
+.wrapper {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin: 0 auto -20px;
+}
+
+.footer, .push {
+    height: 20px;
+}
