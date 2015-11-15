@@ -26,7 +26,7 @@
 	<script type="text/javascript">
 	var canvas = document.getElementById('cv');
 	var viewer = new JSC3D.Viewer(canvas);
-	var rotation = {'x':15, 'y': 0, 'z': 0};
+	var rotation = {'x':15, 'y': 90, 'z': 0};
 	viewer.setParameter('SceneUrl', '');
 	viewer.setParameter('InitRotationX', rotation.x);
 	viewer.setParameter('InitRotationY', rotation.y);
@@ -99,7 +99,7 @@ function update() {
 	if (mouse_down == null) {
 		viewer.rotMatrix.identity();
 		rotation.x += 0;
-		rotation.y += 0.1;
+		rotation.y += 0.025;
 		rotation.z += 0;
 		viewer.rotMatrix.rotateAboutYAxis(rotation.y);
 		viewer.rotMatrix.rotateAboutXAxis(rotation.x);
@@ -229,7 +229,7 @@ function update() {
 		viewer.replaceScene(scene);
 
 
-		viewer.zoomFactor = 8;
+		viewer.zoomFactor = 0.8;
 		update();
 	};
 
