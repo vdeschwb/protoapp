@@ -1,8 +1,8 @@
 <!DOCTYPE HTML>
 <HTML>
  <HEAD>
-  <TITLE> JSC3D - Terrain Demo </TITLE>
-  <META NAME="Author" CONTENT="JSC3D">
+  <TITLE>Terrain Prototype</TITLE>
+  <META NAME="Author" CONTENT="TBD">
 
   <link rel="stylesheet" type="text/css" href="terrain.css">
 
@@ -191,8 +191,9 @@ function update() {
 					var txt = xhr.responseText;
 					var data = txt.split(',');
 					for (var i = 0; i < data.length; i++) {
-						data[i] = (parseFloat(data[i]));
+						data[i] = (parseFloat(data[i]))/20;
 					};
+					console.log("Data length: ", data.length);
 					this.parent.heights = data;
 					// console.log(data);
 					if (this.parent.onDataLoaded != null) {
@@ -207,11 +208,11 @@ function update() {
 	};
 
 	var terrain = new ElevationGrid('terrain');
-	terrain.xDim = 155;
-	terrain.zDim = 129;
+	terrain.xDim = 1024;
+	terrain.zDim = 1024;
 	terrain.xSpacing = .2;
 	terrain.zSpacing = .2;
-	terrain.textureUrl = 'models/map.jpg';
+	terrain.textureUrl = 'eiger.jpg';
 
 	var mesh = null;
 	var mat = new JSC3D.Material();
@@ -232,7 +233,7 @@ function update() {
 		update();
 	};
 
-	terrain.loadFromFile('terrain.dat');
+	terrain.loadFromFile('eiger_height.dat');
 
   </script>
  </BODY>
