@@ -29,3 +29,19 @@ html, body {
 .footer, .push {
     height: 20px;
 }
+
+.settings {
+    font-family: 'Lucida Console', Monaco, monospace;
+    border-radius: 10px;
+    font-size: 12pt;
+    font-weight: 100;
+    background-color: rgba(255,255,255,0.5);
+    margin: 10%;
+    padding: 5px;
+    width:80%;
+    /*display: flex;
+    justify-content: space-between;*/
+    margin-bottom: 2%;
+    position: absolute;
+    bottom: 0;
+}

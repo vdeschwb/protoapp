@@ -17,13 +17,67 @@
  		</div>
  	</div>
 
+ 	<table class='settings'>
+ 		<tr>
+ 			<td>
+ 				<input id="texture_checkbox" type="checkbox" checked="true" onclick="texture_checkbox_click();"> Texture
+
+ 					<select id="texture_select">
+					  	<option value="eiger_topo_1.jpg">TOPO 1</option>
+					  	<option value="eiger_topo_2.jpg">TOPO 2</option>
+					  	<option value="eiger_google_1.jpg" selected="true">GOOGLE 1</option>
+					</select>
+ 			</td>
+ 			<td>
+ 				<input id="animate_checkbox" type="checkbox" checked="true" onclick="animate_checkbox_click();"> Animate
+ 			</td>
+ 			<td>
+ 				Step: <select id="step_select">
+				  	<option value="1">1</option>
+				  	<option value="2" selected="true">2</option>
+				  	<option value="4">4</option>
+				  	<option value="8">8</option>
+				  	<option value="16">16</option>
+				  	<option value="32">32</option>
+				  	<option value="64">64</option>
+				  	<option value="128">128</option>
+				  	<option value="256">256</option>
+				  	<option value="512">512</option>
+				</select>
+ 			</td>
+ 			<td>
+ 				<button onclick="generate();">Generate</button>
+ 			</td>
+ 		</tr>
+ 	</table>
+
  	<div id="canvas_container" style="display:block; height:100%;">
-		<canvas id="cv"</canvas>
+		<canvas id="cv"/>
 	</div>
+
+
 	<script type="text/javascript" src="../jsc3d.js"></script>
 	<script type="text/javascript" src="../jsc3d.touch.js"></script>
 	<script type="text/javascript" src="../jsc3d.webgl.js"></script>
 	<script type="text/javascript">
+
+
+	var step_select = document.getElementById('step_select');
+	var texture_checkbox = document.getElementById('texture_checkbox');
+	function texture_checkbox_click() {
+		if (texture_checkbox.checked) {
+			mesh.setTexture(texture);
+		} else {
+			mesh.setTexture(null);
+		}
+		viewer.update();
+	};
+
+	var animate_checkbox = document.getElementById('animate_checkbox');
+	function animate_checkbox_click() {
+		update();
+	}
+
 	var canvas = document.getElementById('cv');
 	var viewer = new JSC3D.Viewer(canvas);
 	var rotation = {'x':15, 'y': 90, 'z': 0};
@@ -31,7 +85,7 @@
 	viewer.setParameter('InitRotationX', rotation.x);
 	viewer.setParameter('InitRotationY', rotation.y);
 	viewer.setParameter('InitRotationZ', rotation.z);
-	viewer.setParameter('ModelColor', '#CAA618');
+	viewer.setParameter('ModelColor', '#AAAAAA');
 	viewer.setParameter('BackgroundColor1', '#FFFFFF');
 	viewer.setParameter('BackgroundColor2', '#AAAAAA');
 	viewer.setParameter('FaceCulling', 'off');
@@ -51,6 +105,13 @@
 		mouse_down = null;
 	};
 
+	function apply_rotation() {
+		viewer.rotMatrix.identity();
+		viewer.rotMatrix.rotateAboutYAxis(rotation.y);
+		viewer.rotMatrix.rotateAboutXAxis(rotation.x);
+		viewer.rotMatrix.rotateAboutZAxis(rotation.z);
+	}
+
 	viewer.onmousemove = function (x, y) {
 		console.log(x, y);
 		if (mouse_down) {
@@ -59,10 +120,7 @@
 			viewer.rotMatrix.identity();
 			rotation.x += dx;
 			rotation.y += dy;
-			viewer.rotMatrix.identity();
-			viewer.rotMatrix.rotateAboutYAxis(rotation.y);
-			viewer.rotMatrix.rotateAboutXAxis(rotation.x);
-			viewer.rotMatrix.rotateAboutZAxis(rotation.z);
+			apply_rotation();
 			mouse_down = {'x': x, 'y': y};
 		}
 	};
@@ -70,7 +128,6 @@
 
 
 	(function() {
-    var canvas = document.getElementById('cv');
     var canvas_container = document.getElementById('canvas_container');
     // resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
@@ -96,7 +153,7 @@
 
 
 function update() {
-	if (mouse_down == null) {
+	if (mouse_down == null && animate_checkbox.checked) {
 		viewer.rotMatrix.identity();
 		rotation.x += 0;
 		rotation.y += 0.025;
@@ -163,7 +220,6 @@ function update() {
 
 					mesh.texCoordIndexBuffer = mesh.indexBuffer;
 
-					var texture = new JSC3D.Texture;
 					texture.onready = function() {
 						mesh.setTexture(this);
 						viewer.update();
@@ -188,14 +244,14 @@ function update() {
 			xhr.onreadystatechange = function(){ 
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					console.log("DATA LOADED");
-					var txt = xhr.responseText;
-					var data = txt.split(',');
-					for (var i = 0; i < data.length; i++) {
-						data[i] = (parseFloat(data[i]))/20;
-					};
-					console.log("Data length: ", data.length);
-					this.parent.heights = data;
-					// console.log(data);
+					this.parent.heights = [];
+					var lines = xhr.responseText.split('\n');
+					for (var line = 0; line<lines.length; line+=step) {
+						var data = lines[line].split(',');
+						for (var i = 0; i < data.length-1; i+=step) {
+							this.parent.heights.push((parseFloat(data[i]))/20);
+						};
+					}
 					if (this.parent.onDataLoaded != null) {
 						console.log("ODL");
 						this.parent.onDataLoaded();
@@ -207,33 +263,46 @@ function update() {
 		};
 	};
 
-	var terrain = new ElevationGrid('terrain');
-	terrain.xDim = 1024;
-	terrain.zDim = 1024;
-	terrain.xSpacing = .2;
-	terrain.zSpacing = .2;
-	terrain.textureUrl = 'eiger.jpg';
+	var terrain;
+	var step;
+	var mesh;
+	var texture;
+	var mat;
 
-	var mesh = null;
-	var mat = new JSC3D.Material();
-	terrain.onDataLoaded = function() {
+	function generate() {
+		step = parseInt(step_select.options[step_select.selectedIndex].value);
+		terrain = new ElevationGrid('terrain');
+		terrain.xDim = 1024/step;
+		terrain.zDim = 1024/step;
+		terrain.xSpacing = .2*step;
+		terrain.zSpacing = .2*step;
+		terrain.textureUrl = texture_select.options[texture_select.selectedIndex].value;
 
-		mesh = terrain.toMesh();
-		mat.simulateSpecular = true;
-		mat.diffuseColor = 0xcfcfcf;
-		mat.transparency = 0;
-		mesh.setMaterial(mat);
+		mesh = null;
+		texture = new JSC3D.Texture;
+		mat = new JSC3D.Material();
+		terrain.onDataLoaded = function() {
 
-		var scene = new JSC3D.Scene();
-		scene.addChild(mesh);
-		viewer.replaceScene(scene);
+			mesh = terrain.toMesh();
+			mat.simulateSpecular = true;
+			mat.diffuseColor = 0xFFFFFF;
+			mat.transparency = 0;
+			mesh.setMaterial(mat);
+
+			scene = new JSC3D.Scene();
+			scene.addChild(mesh);
+			viewer.replaceScene(scene);
 
 
-		viewer.zoomFactor = 0.8;
-		update();
-	};
+			viewer.zoomFactor = 0.8;
+			update();
+			apply_rotation();
+		};
 
-	terrain.loadFromFile('eiger_height.dat');
+		terrain.loadFromFile('eiger_height.dat');
+	}
+
+	generate();
 
   </script>
  </BODY>

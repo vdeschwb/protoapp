@@ -241,7 +241,7 @@ JSC3D.Viewer.prototype.init = function() {
 				JSC3D.console.logWarning('WebGL is not available. Software rendering is enabled instead.');
 		}
 		try {
-			this.ctx2d = this.canvas.getContext('2d');
+			this.ctx2d = this.canvas.getContext('2d', {preserveDrawingBuffer: true});
 			this.canvasData = this.ctx2d.getImageData(0, 0, this.canvas.width, this.canvas.height);
 		}
 		catch(e) {
@@ -1332,7 +1332,7 @@ JSC3D.Viewer.prototype.fillBackgroundWithImage = function() {
 
 	var data = null;
 	try {
-		var ctx = canvas.getContext('2d');
+		var ctx = canvas.getContext('2d', {preserveDrawingBuffer: true});
 		if(!isCanvasClean)
 			ctx.clearRect(0, 0, w, h);
 		ctx.drawImage(this.bkgImage, 0, 0, w, h);
@@ -4288,7 +4288,7 @@ JSC3D.Texture.prototype.createFromImage = function(image, useMipmap) {
 
 	var data;
 	try {
-		var ctx = canvas.getContext('2d');
+		var ctx = canvas.getContext('2d', {preserveDrawingBuffer: true});
 		if(!isCanvasClean)
 			ctx.clearRect(0, 0, dim, dim);
 		ctx.drawImage(image, 0, 0, dim, dim);
