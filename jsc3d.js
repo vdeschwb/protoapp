@@ -4608,6 +4608,13 @@ JSC3D.Matrix3x4.prototype.multiply = function(mult) {
 	this.m20 = m20; this.m21 = m21; this.m22 = m22; this.m23 = m23;
 };
 
+JSC3D.Matrix3x4.prototype.repr = function() {
+	var rounding = 4;
+	return "<table><tr><td>" + this.m00.toFixed(rounding).toString() + "</td><td>" + this.m01.toFixed(rounding).toString() + "</td><td>" + this.m02.toFixed(rounding).toString()  + "</td></tr>" +
+	"<tr><td>" + this.m10.toFixed(rounding).toString() + "</td><td>" + this.m11.toFixed(rounding).toString() + "</td><td>" + this.m12.toFixed(rounding).toString()  + "</td></tr>" +
+	"<tr><td>" + this.m20.toFixed(rounding).toString() + "</td><td>" + this.m21.toFixed(rounding).toString() + "</td><td>" + this.m22.toFixed(rounding).toString() + "</td></tr></table>";
+};
+
 
 /**
 	@class Math3D

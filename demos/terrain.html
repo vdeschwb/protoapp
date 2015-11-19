@@ -15,6 +15,10 @@
  		<div style="font-size:12pt;">
  			v 0.1
  		</div>
+ 		<br>
+ 		<div id="info" style="font-size:12pt;">
+ 			
+ 		</div>
  	</div>
 
  	<table class='settings'>
@@ -65,11 +69,6 @@
 	var step_select = document.getElementById('step_select');
 	var texture_checkbox = document.getElementById('texture_checkbox');
 	function texture_checkbox_click() {
-		if (texture_checkbox.checked) {
-			mesh.setTexture(texture);
-		} else {
-			mesh.setTexture(null);
-		}
 		viewer.update();
 	};
 
@@ -78,9 +77,13 @@
 		update();
 	}
 
+	
+
 	var canvas = document.getElementById('cv');
 	var viewer = new JSC3D.Viewer(canvas);
-	var rotation = {'x':15, 'y': 90, 'z': 0};
+	var reset_rotation = {'x':0, 'y': 135, 'z': 0};
+	var rotation = JSON.parse(JSON.stringify(reset_rotation));
+	var up = [0,1,0];
 	viewer.setParameter('SceneUrl', '');
 	viewer.setParameter('InitRotationX', rotation.x);
 	viewer.setParameter('InitRotationY', rotation.y);
@@ -105,11 +108,39 @@
 		mouse_down = null;
 	};
 
+	viewer.beforeupdate =function() {
+		if (mesh) {
+			if (texture_checkbox.checked) {
+				mesh.setTexture(texture);
+			} else {
+				mesh.setTexture(null);
+			}
+		}
+	};
+
+	viewer.afterupdate = function() {
+		var info = document.getElementById('info');
+		info.innerHTML = viewer.rotMatrix.repr() + "<br>";
+		info.innerHTML += up[0].toString() + "<br>";
+		info.innerHTML += up[1].toString() + "<br>";
+		info.innerHTML += up[2].toString() + "<br>";
+		info.innerHTML += "zoom: "+viewer.zoomFactor.toString() + "<br>";
+	};
+
 	function apply_rotation() {
-		viewer.rotMatrix.identity();
-		viewer.rotMatrix.rotateAboutYAxis(rotation.y);
-		viewer.rotMatrix.rotateAboutXAxis(rotation.x);
-		viewer.rotMatrix.rotateAboutZAxis(rotation.z);
+		rotation.x += 360;
+		rotation.x %= 360;
+		rotation.y += 360;
+		rotation.y %= 360;
+		rotation.z += 360;
+		rotation.z %= 360;
+
+		// viewer.transformMatrix.identity();
+		// viewer.transformMatrix.rotateAboutXAxis(rotation.x);
+		// viewer.transformMatrix.rotateAboutYAxis(rotation.y);
+		// viewer.transformMatrix.rotateAboutZAxis(rotation.z);
+
+		JSC3D.Math3D.transformVectors(viewer.rotMatrix, [0,1,0], up);
 	}
 
 	viewer.onmousemove = function (x, y) {
@@ -117,9 +148,11 @@
 		if (mouse_down) {
 			var dx = (y - mouse_down.y) * 0.1;
 			var dy = (x - mouse_down.x) * 0.1;
-			viewer.rotMatrix.identity();
+			// viewer.rotMatrix.identity();
 			rotation.x += dx;
+			viewer.rotate(dx,0,0);
 			rotation.y += dy;
+			viewer.rotate(0,dy,0);
 			apply_rotation();
 			mouse_down = {'x': x, 'y': y};
 		}
@@ -132,11 +165,66 @@
     // resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
 
+    window.addEventListener('keydown', keyHandler);
+
+    function keyHandler(event) {
+    	if (event.keyCode == 87) {
+    		//w
+    		rotation.x += 1;
+    		viewer.rotate(1,0,0);
+    	}
+
+    	if (event.keyCode == 65) {
+    		//a
+    		rotation.y -= 1;
+    		viewer.rotate(0,-1,0);
+    	}
+
+    	if (event.keyCode == 83) {
+    		//s
+    		rotation.x -= 1;
+    		viewer.rotate(-1,0,0);
+    	}
+
+    	if (event.keyCode == 68) {
+    		//d
+    		rotation.y += 1;
+    		viewer.rotate(0,1,0);
+    	}
+
+    	if (event.keyCode == 81) {
+    		//q
+    		rotation.z += 1;
+    		viewer.rotate(0,0,1);
+    	}
+
+    	if (event.keyCode == 69) {
+    		//e
+    		rotation.z -= 1;
+    		viewer.rotate(0,0,-1);
+    	}
+
+    	if (event.keyCode == 82) {
+    		//r
+    		rotation = JSON.parse(JSON.stringify(reset_rotation));
+    		viewer.rotMatrix.identity();
+    		viewer.rotate(rotation.x, rotation.y, rotation.z);
+    		console.log("Reset rotation");
+    	}
+
+
+    	apply_rotation();
+    	viewer.update();
+    }
+
     function resizeCanvas() {
     		// canvas_container.width = window.innerWidth;
     		// canvas_container.height = window.innerHeight;
-            canvas.width = canvas_container.clientWidth;
-            canvas.height = canvas_container.clientHeight;
+            canvas.width = Math.min(canvas_container.clientWidth, canvas_container.clientHeight);
+            canvas.height = Math.min(canvas_container.clientWidth, canvas_container.clientHeight);
+
+            viewer.frameWidth = canvas.width;
+            viewer.frameHeight = canvas.height;
 
             /**
              * Your drawings need to be inside this function otherwise they will be reset when 
@@ -154,14 +242,12 @@
 
 function update() {
 	if (mouse_down == null && animate_checkbox.checked) {
-		viewer.rotMatrix.identity();
-		rotation.x += 0;
-		rotation.y += 0.025;
-		rotation.z += 0;
-		viewer.rotMatrix.rotateAboutYAxis(rotation.y);
-		viewer.rotMatrix.rotateAboutXAxis(rotation.x);
-		viewer.rotMatrix.rotateAboutZAxis(rotation.z);
-		// viewer.rotate(rotation.x, rotation.y, rotation.z);
+		// viewer.rotMatrix.identity();
+		// rotation.x += 0;
+		// rotation.y += 0.025;
+		// // rotation.z += 0;
+		var speed = 0.05;
+		viewer.rotate(up[0]*speed, up[1]*speed, up[2]*speed);
 		viewer.update();
 	}
 	setTimeout(update, 10);
@@ -247,9 +333,9 @@ function update() {
 					this.parent.heights = [];
 					var lines = xhr.responseText.split('\n');
 					for (var line = 0; line<lines.length; line+=step) {
-						var data = lines[line].split(',');
+						var data = (lines[line]+',').split(',');
 						for (var i = 0; i < data.length-1; i+=step) {
-							this.parent.heights.push((parseFloat(data[i]))/20);
+							this.parent.heights.push((parseFloat(data[i])));
 						};
 					}
 					if (this.parent.onDataLoaded != null) {
@@ -274,8 +360,8 @@ function update() {
 		terrain = new ElevationGrid('terrain');
 		terrain.xDim = 1024/step;
 		terrain.zDim = 1024/step;
-		terrain.xSpacing = .2*step;
-		terrain.zSpacing = .2*step;
+		terrain.xSpacing = step;
+		terrain.zSpacing = step;
 		terrain.textureUrl = texture_select.options[texture_select.selectedIndex].value;
 
 		mesh = null;
@@ -285,7 +371,7 @@ function update() {
 
 			mesh = terrain.toMesh();
 			mat.simulateSpecular = true;
-			mat.diffuseColor = 0xFFFFFF;
+			mat.diffuseColor = 0xAAAAAA;
 			mat.transparency = 0;
 			mesh.setMaterial(mat);
 
@@ -293,8 +379,7 @@ function update() {
 			scene.addChild(mesh);
 			viewer.replaceScene(scene);
 
-
-			viewer.zoomFactor = 0.8;
+			viewer.zoomFactor = 0.5;
 			update();
 			apply_rotation();
 		};
