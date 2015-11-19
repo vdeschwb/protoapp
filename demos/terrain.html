@@ -360,8 +360,8 @@ function update() {
 		terrain = new ElevationGrid('terrain');
 		terrain.xDim = 1024/step;
 		terrain.zDim = 1024/step;
-		terrain.xSpacing = step;
-		terrain.zSpacing = step;
+		terrain.xSpacing = 2*step;
+		terrain.zSpacing = 2*step;
 		terrain.textureUrl = texture_select.options[texture_select.selectedIndex].value;
 
 		mesh = null;
